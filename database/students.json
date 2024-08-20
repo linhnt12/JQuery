@@ -1,0 +1,25 @@
+{
+  "students": [
+    {
+      "id": 1,
+      "name": "Nguyễn Văn A",
+      "dob": "2002-03-09",
+      "phone": "0912345678",
+      "hometown": "Hà Nội"
+    },
+    {
+      "id": 2,
+      "name": "Trần Thị B",
+      "dob": "2001-07-22",
+      "phone": "0987654321",
+      "hometown": "Hồ Chí Minh"
+    },
+    {
+      "id": 3,
+      "name": "Lê Văn C",
+      "dob": "2000-12-05",
+      "phone": "0901234567",
+      "hometown": "Đà Nẵng"
+    }
+  ]
+}

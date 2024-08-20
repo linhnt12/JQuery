@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
+    integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
+  <link rel="stylesheet" href="style.css">
+  <title>Student Form</title>
+  <script src="jquery-3.7.1.min.js"></script>
+</head>
+
+<body>
+  <div class="container">
+    <div class="row">
+      <div class="col">
+        <h1>Student Form</h1>
+        <form action="">
+          <div class="form-group">
+            <label for="name">Name:</label>
+            <input type="text" class="form-control" id="name">
+            <div class="valid" id="validName"></div>
+          </div>
+          <div class="form-group">
+            <label for="dob">Birthday:</label>
+            <input type="date" class="form-control" id="dob">
+            <div class="valid" id="validDob"></div>
+          </div>
+          <div class="form-group">
+            <label for="phone">Mobile phone:</label>
+            <input type="text" class="form-control" id="phone">
+            <div class="valid" id="validPhone"></div>
+          </div>
+          <div class="form-group">
+            <label for="hometown">Hometown:</label>
+            <input type="text" class="form-control" id="hometown">
+            <div class="valid" id="validHometown"></div>
+          </div>
+          <button type="submit" class="btn btn-primary" id="save">Save</button>
+          <button type="submit" class="btn btn-primary" id="reset">Reset</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="container list">
+    <button class="btn btn-primary" id="del" disabled>Delete</button>
+    <button class="btn btn-primary" id="edit" disabled>Edit</button>
+
+    <table class="table table-bordered" style="margin-top: 30px;">
+      <thead class="thead-dark">
+        <tr>
+          <th scope="col"></th>
+          <th scope="col">Name</th>
+          <th scope="col">Birthday</th>
+          <th scope="col">Mobile phone</th>
+          <th scope="col">Hometown</th>
+        </tr>
+      </thead>
+      <tbody id="studentsTbl">
+      </tbody>
+    </table>
+  </div>
+</body>
+
+<script>
+  $(document).ready(function () {
+    var selectedId = null;
+
+    function fetchApi() {
+      $.ajax({
+        url: "http://localhost:3000/students",
+        method: 'GET',
+        success: function (data) {
+          var tbl = $('#studentsTbl');
+          tbl.empty();
+          data.forEach(function (student) {
+            var row = `<tr student-id = "${student.id}">
+                        <th scope="row"><input type="checkbox" class="student-checkbox"></th>
+                        <td>${student.name}</td>
+                        <td>${student.dob}</td>
+                        <td>${student.phone}</td>
+                        <td>${student.hometown}</td>
+                      </tr>`;
+            tbl.append(row);
+          });
+
+        }
+      });
+    }
+
+    fetchApi();
+
+    // Save Student Information
+    $(document).on('click', '#save', function () {
+      event.preventDefault();
+
+      let isValid = true;
+
+      let name = $('#name').val();
+      let dob = $('#dob').val();
+      let phone = $('#phone').val();
+      let hometown = $('#hometown').val();
+
+      if (name == '' || /\d/.test(name)) {
+        $('#validName').text('Name value is not valid!');
+        isValid = false;
+      } else $('#validName').empty();
+
+      if (dob == '') {
+        $('#validDob').text('Birthday value is not valid!');
+        isValid = false;
+      } else $('#validDob').empty();
+
+      if (phone == '' || !$.isNumeric(phone)) {
+        $('#validPhone').text('Mobile phone value is not valid!');
+        isValid = false;
+      } else $('#validPhone').empty();
+
+      if (hometown == '' || /\d/.test(hometown)) {
+        $('#validHometown').text('Hometown value is not valid!');
+        isValid = false;
+      } else $('#validHometown').empty();
+
+      if (isValid) {
+        const newStudent = {
+          name: name,
+          dob: dob,
+          phone: phone,
+          hometown: hometown
+        }
+
+        if (selectedId) {
+          $.ajax({
+            url: `http://localhost:3000/students/${selectedId}`,
+            method: 'PATCH',
+            contentType: "application/json",
+            data: JSON.stringify(newStudent),
+            success: function (data) {
+              alert("Cập nhật thông tin thành công!");
+              fetchApi();
+              $("form").reset();
+              selectedId = null;
+            }
+          });
+        } else {
+          $.ajax({
+            url: `http://localhost:3000/students`,
+            method: 'POST',
+            contentType: "application/json",
+            data: JSON.stringify(newStudent),
+            success: function (data) {
+              alert("Thêm sinh viên thành công!");
+              fetchApi();
+              $("form").reset();
+            }
+          });
+        }
+      }
+    })
+
+    // Button Reset 
+    $(document).on('click', '#reset', function () {
+      $("form").reset();
+    })
+
+    // Button Delete & Edit
+    $(document).on('change', '.student-checkbox', function () {
+      var cnt = $('.student-checkbox:checked').length;
+      if (cnt > 0) {
+        $('#edit').prop('disabled', false);
+        $('#del').prop('disabled', false);
+      } else {
+        $('#edit').prop('disabled', true);
+        $('#del').prop('disabled', true);
+      }
+    })
+
+    // Edit Student
+    $(document).on('click', '#edit', function () {
+      event.preventDefault();
+
+      var cnt = $('.student-checkbox:checked').length;
+      if (cnt !== 1) alert('Bạn chỉ được sửa thông tin của 1 sinh viên!');
+      else {
+        let student = $('.student-checkbox:checked').closest('tr');
+        selectedId = student.attr('student-id');
+        let name = student.find('td:eq(0)').text();
+        let dob = student.find('td:eq(1)').text();
+        let phone = student.find('td:eq(2)').text();
+        let hometown = student.find('td:eq(3)').text();
+
+        $('#name').val(name);
+        $('#dob').val(dob);
+        $('#phone').val(phone);
+        $('#hometown').val(hometown);
+      }
+    })
+
+    // Delete Student
+    $(document).on('click', '#del', function () {
+      event.preventDefault();
+
+      if (confirm('Bạn có chắc chắn muốn xóa sinh viên đang chọn?')) {
+        let students = $('.student-checkbox:checked');
+        if (students.length > 0) {
+          students.each(function () {
+            let studentId = $(this).closest('tr').attr('student-id');
+            $.ajax({
+              url: `http://localhost:3000/students/${studentId}`,
+              method: 'DELETE',
+              success: function (data) {
+                fetchApi();
+              }
+            });
+          })
+        }
+        alert("Xoá sinh viên thành công!");
+      }
+    })
+  })
+</script>
+
+</html>
